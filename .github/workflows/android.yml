@@ -3,7 +3,8 @@ name: Android APK erstellen
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -11,22 +12,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Projekt laden
+      - name: Projekt herunterladen
         uses: actions/checkout@v4
 
-      - name: Java einrichten
+      - name: Java 17 einrichten
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Android SDK einrichten
-        uses: android-actions/setup-android@v3
+      - name: Android SDK prüfen
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms"
+          ls "$ANDROID_HOME/build-tools"
 
       - name: Gradle einrichten
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      - name: Android SDK 35 installieren
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" || true
 
       - name: APK erstellen
         run: gradle assembleDebug --stacktrace
@@ -36,3 +46,4 @@ jobs:
         with:
           name: POWER-RADIO-APK
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
